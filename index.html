@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+	<head>
+	    <meta charset="utf-8">
+	    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="initial-scale=1.0, user-scalable=no, width=device-width">
+        <title>效果展示页面</title>
+        <script src="3rd/jquery-1.11.3.min.js"></script>
+        <style>
+            html, body, #container, #container > iframe {
+                width: 100%;
+                height: 100%;
+                padding: 0;
+                margin: 0;
+                border: 0;
+            }
+            #control-panel {
+                position: absolute;
+                top: 5px;
+                right: 5px;
+                z-index: 100;
+            }
+            #frame[src=""], #frame:not([src=""]) + #info {
+                display: none;
+            }
+            #info {
+                list-style-type: disc;
+            }
+            #info li.error {
+                color: #f00;
+                font-weight: bolder;
+            }
+            #info li.warning {
+                color: #f89807;
+                font-weight: bolder;
+            }
+            #info p {
+                margin: 10px 0 0 0;
+            }
+            #info span {
+                font-style: italic;
+            }
+        </style>
+	</head>
+	<body>
+        <div id="control-panel">
+            <button data-src="">Main</button>
+            <button data-src="echarts/">ECharts</button>
+            <button data-src="mapbox/">Mapbox</button>
+            <button data-src="three/" disabled>Three</button>
+        </div>
+		<div id="container">
+            <iframe id="frame" src=""></iframe>
+            <ul id="info">
+                <li>
+                    <p>ECharts</p>
+                    <span>大场景渲染没有问题，细节不足</span>
+                    <ul>
+                        <li>依赖mapbox或maptalks支持hdr场景渲染</li>
+                        <li>依赖mapbox或maptalks支持json格式的路网以及模型加载</li>
+                        <li class="error">不支持直接渲染obj模型或其他复杂效果渲染</li>
+                    </ul>
+                </li>
+                <li>
+                    <p>Mapbox</p>
+                    <span>全面，细节特效可依赖three</span>
+                    <ul>
+                        <li>推测单体选中效果要仿照Cesium中倾斜摄影模型选中效果来实现</li>
+                        <li class="warning">由ECharts推测可渲染hdr场景，目前没找到明确的API</li>
+                    </ul>
+                </li>
+            </ul>
+        </div>
+		<script>
+            $(document).ready(function() {
+                $('#control-panel button').on("click", function() {
+                    $("#frame").attr("src", $(this).data("src"))
+                })
+            })
+		</script>
+	</body>
+</html>

@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+    <head>
+        <meta charset='utf-8' />
+        <meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' />
+        <title>Display buildings in 3D</title>
+
+        <script src='../data/buildings.js'></script>
+        <script src="../3rd/jquery-1.11.3.min.js"></script>
+        <script src='https://api.tiles.mapbox.com/mapbox-gl-js/v0.54.0/mapbox-gl.js'></script>
+        <script src='https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-language/v0.9.2/mapbox-gl-language.js'></script>
+        <link href='https://api.tiles.mapbox.com/mapbox-gl-js/v0.54.0/mapbox-gl.css' rel='stylesheet' />
+        <style>
+            body { margin:0; padding:0; }
+            #map { position:absolute; top:0; bottom:0; width:100%; }
+        </style>
+    </head>
+    <body>
+        <div id='map'></div>
+        <script>
+            mapboxgl.accessToken = 'pk.eyJ1IjoiY2hhaW5zZXllIiwiYSI6ImNqdjNsa2xpejFsbDkzeW1udGhrajIwNzUifQ.Xac7C81a-OvvJvN_hzPbnQ';
+            var map = new mapboxgl.Map({
+                container: 'map',
+                style: 'mapbox://styles/mapbox/dark-v9',
+                center: 
+                //[-74.0884285, 40.630851],
+                [121.39839606312597, 31.16584739673185],
+                zoom: 15.5,
+                pitch: 45,
+                bearing: -17.6,
+            });
+     
+            $.getJSON("../../../data/building_uuid.geojson", function(data) {
+                console.log('2222222222----------------222222');
+                console.log(data);
+                console.log(buildings);
+                console.log("================================");
+            });
+            map.on('load', function() {
+                map.addSource("sites", {
+                    'type': 'geojson',
+                    'data': buildings
+                });
+                map.addLayer({
+                    'id': 'sites-bold',
+                    'type': 'fill-extrusion',
+                    'source': 'sites',
+                    'paint': {
+                
+                    // Get the fill-extrusion-color from the source 'color' property.
+                    'fill-extrusion-color': ['case',
+                        ['boolean', ['feature-state', 'hover'], false],
+                        'red',
+                        setColor()
+                        ],
+                    // Get fill-extrusion-height from the source 'height' property.
+                    'fill-extrusion-height': setHeight(20, 140),
+                    
+                    // Get fill-extrusion-base from the source 'base_height' property.
+                    'fill-extrusion-base': ['get', 'base_height'],
+                    
+                    // Make extrusions slightly opaque for see through indoor walls.
+                    'fill-extrusion-opacity': 1
+                    }
+                });
+                function setColor() {
+                    return (function(m, s, c) {
+                        return (c ? arguments.callee(m, s, c - 1) : '#') +
+                            s[m.floor(m.random() * 16)]
+                    })(Math, '0123456789abcdef', 5)
+                }
+                function setHeight(lower, upper) {
+                    return Math.floor(Math.random() * (upper - lower)) + lower;
+                }
+                var layers = map.getStyle().layers;
+                var labelLayerId;
+                for (var i = 0; i < layers.length; i++) {
+                if (layers[i].type === 'symbol' && layers[i].layout['text-field']) {
+                labelLayerId = layers[i].id;
+                break;
+                }
+                }
+                
+                map.addLayer({
+                    'id': '3d-buildings',
+                    'source': 'composite',
+                    'source-layer': 'building',
+                    'filter': ['==', 'extrude', 'true'],
+                    'type': 'fill-extrusion',
+                    'minzoom': 15,
+                    'paint': {
+                    'fill-extrusion-color': '#aaa',
+                    
+                    // use an 'interpolate' expression to add a smooth transition effect to the
+                    // buildings as the user zooms in
+                    'fill-extrusion-height': [
+                    "interpolate", ["linear"], ["zoom"],
+                    15, 0,
+                    15.05, ["get", "height"]
+                    ],
+                    'fill-extrusion-base': [
+                    "interpolate", ["linear"], ["zoom"],
+                    15, 0,
+                    15.05, ["get", "min_height"]
+                    ],
+                    'fill-extrusion-opacity': .6
+                    }
+                }, labelLayerId);
+            });
+            map.on('click', function(e) {
+                console.log(map);
+                var features = map.queryRenderedFeatures(e.point);
+                if(features.length > 0) {
+                    map.setFeatureState({source: 'sites', id: this.hoveredStateId}, { hover: true});
+                }
+            })
+        </script>
+    </body>
+</html>
